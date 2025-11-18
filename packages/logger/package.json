@@ -1,0 +1,46 @@
+{
+  "name": "@djed/logger",
+  "version": "0.1.0",
+  "description": "Structured logging wrapper around Winston for LUXOR projects",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "bench": "vitest bench --run",
+    "bench:watch": "vitest bench",
+    "measure:ttfl": "node -e \"const {measureTimeToFirstLog} = require('./dist/index.js'); console.log(JSON.stringify({timeToFirstLog: measureTimeToFirstLog()}))\" 2>/dev/null > metrics.json && cat metrics.json",
+    "check:size": "npm run build && bundlesize",
+    "clean": "rm -rf dist coverage metrics.json",
+    "prepublishOnly": "npm run clean && npm run build && npm test"
+  },
+  "keywords": [
+    "logging",
+    "logger",
+    "winston",
+    "structured-logging",
+    "luxor",
+    "djed"
+  ],
+  "author": "LUXOR",
+  "license": "MIT",
+  "peerDependencies": {
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@vitest/coverage-v8": "^1.6.1",
+    "bundlesize": "^0.18.2",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1",
+    "winston": "^3.11.0"
+  },
+  "bundlesize": [
+    {
+      "path": "./dist/index.js",
+      "maxSize": "5 KB"
+    }
+  ]
+}
