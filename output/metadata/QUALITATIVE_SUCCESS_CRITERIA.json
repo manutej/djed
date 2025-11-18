@@ -1,0 +1,24 @@
+{
+  "title": "Djed Qualitative Success Criteria",
+  "name": "QUALITATIVE_SUCCESS_CRITERIA",
+  "file": "QUALITATIVE_SUCCESS_CRITERIA.md",
+  "file_size": 20483,
+  "line_count": 573,
+  "word_count": 3198,
+  "section_count": 50,
+  "code_blocks": 0,
+  "links": 0,
+  "images": 0,
+  "has_math": false,
+  "modified": "2025-11-03T20:11:54.867918",
+  "created": "2025-11-03T20:11:54.873134",
+  "summary": "# Djed Qualitative Success Criteria  **Measuring success through human experience, not just metrics**  ---  ## 🎯 Philosophy  Quantitative metrics (downloads, test coverage, bundle size) tell us *what*",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "pdf_files": {
+    "light": "light/QUALITATIVE_SUCCESS_CRITERIA-light.pdf",
+    "dark": "dark/QUALITATIVE_SUCCESS_CRITERIA-dark.pdf"
+  }
+}

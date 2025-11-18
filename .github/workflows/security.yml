@@ -1,0 +1,279 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Scheduled weekly scans (Sundays at midnight UTC)
+  schedule:
+    - cron: '0 0 * * 0'
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  npm-audit:
+    name: NPM Audit
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        package: [logger, validator, mcp-base, cli, shared-types]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd packages/${{ matrix.package }}
+          npm ci
+
+      - name: Run npm audit
+        id: npm-audit
+        run: |
+          cd packages/${{ matrix.package }}
+
+          # Run audit and capture output
+          npm audit --audit-level=high --json > audit-results.json || true
+
+          # Check if vulnerabilities found
+          VULN_COUNT=$(cat audit-results.json | jq '.metadata.vulnerabilities.high + .metadata.vulnerabilities.critical')
+
+          echo "vulnerabilities=$VULN_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$VULN_COUNT" -gt 0 ]; then
+            echo "::error::Found $VULN_COUNT high/critical vulnerabilities in @djed/${{ matrix.package }}"
+            npm audit --audit-level=high
+            exit 1
+          else
+            echo "::notice::No high/critical vulnerabilities found in @djed/${{ matrix.package }}"
+          fi
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/audit-results.json
+          retention-days: 30
+
+  snyk-scan:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        package: [logger, validator, mcp-base, cli, shared-types]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd packages/${{ matrix.package }}
+          npm ci
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=packages/${{ matrix.package }}/package.json
+
+      - name: Upload Snyk result to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-2.0, GPL-3.0
+          comment-summary-in-pr: always
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [npm-audit, snyk-scan]
+    if: always()
+
+    steps:
+      - name: Download all audit artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: security-results/
+
+      - name: Create security summary
+        run: |
+          echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check npm audit results
+          echo "### NPM Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | High | Critical | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+
+          for package in logger validator mcp-base cli shared-types; do
+            if [ -f "security-results/npm-audit-${package}/audit-results.json" ]; then
+              HIGH=$(cat "security-results/npm-audit-${package}/audit-results.json" | jq '.metadata.vulnerabilities.high')
+              CRITICAL=$(cat "security-results/npm-audit-${package}/audit-results.json" | jq '.metadata.vulnerabilities.critical')
+              TOTAL=$((HIGH + CRITICAL))
+
+              if [ "$TOTAL" -eq 0 ]; then
+                STATUS="✅ Pass"
+              else
+                STATUS="❌ Fail"
+              fi
+
+              echo "| @djed/${package} | ${HIGH} | ${CRITICAL} | ${STATUS} |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed results in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read audit results
+            let tableRows = '';
+            const packages = ['logger', 'validator', 'mcp-base', 'cli', 'shared-types'];
+
+            for (const pkg of packages) {
+              const filePath = `security-results/npm-audit-${pkg}/audit-results.json`;
+              if (fs.existsSync(filePath)) {
+                const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                const high = data.metadata.vulnerabilities.high || 0;
+                const critical = data.metadata.vulnerabilities.critical || 0;
+                const total = high + critical;
+                const status = total === 0 ? '✅ Pass' : '❌ Fail';
+                tableRows += `| @djed/${pkg} | ${high} | ${critical} | ${status} |\n`;
+              }
+            }
+
+            const comment = `## 🔒 Security Scan Results
+
+            | Package | High | Critical | Status |
+            |---------|------|----------|--------|
+            ${tableRows}
+
+            ### Summary
+
+            **NPM Audit**: Checked for high and critical vulnerabilities
+            **Snyk**: Supply chain security analysis
+            **Dependency Review**: License and vulnerability checks
+
+            View detailed results in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+            ---
+
+            **Note**: Security scanning runs on every PR and weekly on Sundays.
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  alert-on-failure:
+    name: Alert on Security Failure
+    runs-on: ubuntu-latest
+    needs: [npm-audit, snyk-scan]
+    if: failure()
+
+    steps:
+      - name: Create issue for security vulnerabilities
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Security Vulnerabilities Detected';
+            const body = `## Security Alert
+
+            High or critical vulnerabilities were detected in the Djed packages.
+
+            **Workflow Run**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Branch**: ${{ github.ref_name }}
+            **Triggered by**: ${{ github.event_name }}
+
+            ### Action Required
+
+            1. Review the workflow run for details
+            2. Check npm audit results in artifacts
+            3. Update vulnerable dependencies
+            4. Re-run security scan to verify fix
+
+            ### Resources
+
+            - [NPM Audit Documentation](https://docs.npmjs.com/cli/v8/commands/npm-audit)
+            - [Snyk Vulnerability Database](https://snyk.io/vuln)
+            - [Djed Security Policy](./SECURITY.md)
+
+            ---
+
+            **Auto-generated by security workflow**
+            `;
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security'
+            });
+
+            const existingIssue = issues.data.find(issue => issue.title === title);
+
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'high-priority']
+              });
+            } else {
+              // Add comment to existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `🔄 Security scan failed again on ${new Date().toISOString()}\n\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+            }

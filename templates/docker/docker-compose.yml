@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # MCP Server
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: {{PROJECT_NAME}}-server
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOGS_DIR=/app/logs
+    volumes:
+      # Persist logs
+      - ./logs:/app/logs
+      # Optional: mount config files
+      # - ./config:/app/config:ro
+    # Uncomment if using HTTP/WebSocket transport
+    # ports:
+    #   - "3000:3000"
+    networks:
+      - mcp-network
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Optional: Add a database (PostgreSQL example)
+  # database:
+  #   image: postgres:16-alpine
+  #   container_name: {{PROJECT_NAME}}-db
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_USER=${DB_USER:-postgres}
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+  #     - POSTGRES_DB=${DB_NAME:-mcpserver}
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - mcp-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Optional: Add Redis for caching
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: {{PROJECT_NAME}}-redis
+  #   restart: unless-stopped
+  #   networks:
+  #     - mcp-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+networks:
+  mcp-network:
+    driver: bridge
+
+# volumes:
+#   postgres-data:

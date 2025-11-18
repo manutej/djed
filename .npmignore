@@ -1,0 +1,23 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Tests
+**/*.test.*
+**/*.spec.*
+__tests__/
+__mocks__/
+
+# Config files
+tsconfig.json
+.eslintrc.json
+.prettierrc
+.gitignore
+
+# Documentation (keep only README)
+docs/
+
+# Development
+.github/
+.vscode/

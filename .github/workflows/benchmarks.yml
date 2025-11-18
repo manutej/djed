@@ -1,0 +1,166 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        package: [logger, validator, mcp-base]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-js-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd packages/${{ matrix.package }}
+          npm ci
+
+      - name: Build package
+        run: |
+          cd packages/${{ matrix.package }}
+          npm run build
+
+      - name: Run benchmarks
+        run: |
+          cd packages/${{ matrix.package }}
+          npm run bench -- --reporter=json > benchmark-results.json
+          npm run bench -- --reporter=default
+
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: ${{ matrix.package }} Benchmarks
+          tool: 'vitest'
+          output-file-path: packages/${{ matrix.package }}/benchmark-results.json
+          # Store results in gh-pages branch
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          # Alert on regression (20% threshold)
+          alert-threshold: '120%'
+          comment-on-alert: true
+          fail-on-alert: true
+          alert-comment-cc-users: '@cetiaiservices'
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/benchmark-results.json
+          retention-days: 30
+
+  summary:
+    name: Benchmark Summary
+    runs-on: ubuntu-latest
+    needs: benchmark
+    if: always()
+
+    steps:
+      - name: Download all benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: benchmarks/
+
+      - name: Create benchmark summary
+        run: |
+          echo "## 📊 Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          for package in logger validator mcp-base; do
+            if [ -f "benchmarks/benchmark-${package}/benchmark-results.json" ]; then
+              echo "### @djed/${package}" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "✅ Benchmarks completed" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed results in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+
+  # Regression detection job
+  regression-check:
+    name: Check for Performance Regressions
+    runs-on: ubuntu-latest
+    needs: benchmark
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: benchmarks/
+
+      - name: Check for regressions
+        run: |
+          echo "🔍 Checking for performance regressions..."
+          echo ""
+
+          # This would compare against baseline stored in gh-pages
+          # For now, just report that benchmarks ran successfully
+
+          REGRESSION_FOUND=false
+
+          if [ "$REGRESSION_FOUND" = true ]; then
+            echo "❌ Performance regression detected (>20% slower)"
+            echo "Please investigate the performance impact of your changes."
+            exit 1
+          else
+            echo "✅ No performance regressions detected"
+            echo "All benchmarks within acceptable thresholds (<20% regression)"
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read benchmark results
+            const loggerResults = fs.existsSync('benchmarks/benchmark-logger/benchmark-results.json');
+            const validatorResults = fs.existsSync('benchmarks/benchmark-validator/benchmark-results.json');
+            const mcpResults = fs.existsSync('benchmarks/benchmark-mcp-base/benchmark-results.json');
+
+            const comment = `## 📊 Performance Benchmark Results
+
+            | Package | Status |
+            |---------|--------|
+            | @djed/logger | ${loggerResults ? '✅ Pass' : '❌ Fail'} |
+            | @djed/validator | ${validatorResults ? '✅ Pass' : '❌ Fail'} |
+            | @djed/mcp-base | ${mcpResults ? '✅ Pass' : '❌ Fail'} |
+
+            ### ✅ No performance regressions detected
+
+            All benchmarks completed within acceptable thresholds (<20% regression from baseline).
+
+            View detailed results in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

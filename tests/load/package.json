@@ -1,0 +1,24 @@
+{
+  "name": "@djed/load-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Load testing for Djed packages under realistic scenarios",
+  "type": "module",
+  "scripts": {
+    "test:logger": "node logger-load.test.js",
+    "test:validator": "node validator-load.test.js",
+    "test:mcp-server": "node mcp-server-load.test.js",
+    "test:all": "npm run test:logger && npm run test:validator && npm run test:mcp-server",
+    "test:memory": "node --expose-gc memory-leak-test.js"
+  },
+  "dependencies": {
+    "@djed/logger": "workspace:*",
+    "@djed/validator": "workspace:*",
+    "@djed/mcp-base": "workspace:*"
+  },
+  "devDependencies": {
+    "autocannon": "^7.12.0",
+    "clinic": "^13.0.0",
+    "memwatch-next": "^0.3.0"
+  }
+}

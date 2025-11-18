@@ -1,0 +1,44 @@
+{
+  "name": "@djed/validator",
+  "version": "0.1.0",
+  "description": "JSON schema validation for LUXOR projects using Ajv",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "bench": "vitest bench --run",
+    "bench:watch": "vitest bench",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "validation",
+    "validator",
+    "ajv",
+    "json-schema",
+    "luxor"
+  ],
+  "author": "LUXOR",
+  "license": "MIT",
+  "dependencies": {
+    "@djed/shared-types": "^0.1.0",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "ajv-errors": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.6.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

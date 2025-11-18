@@ -1,0 +1,24 @@
+{
+  "title": "Djed Phase 2 Roadmap",
+  "name": "PHASE_2_ROADMAP",
+  "file": "PHASE_2_ROADMAP.md",
+  "file_size": 11915,
+  "line_count": 476,
+  "word_count": 1647,
+  "section_count": 40,
+  "code_blocks": 6,
+  "links": 3,
+  "images": 0,
+  "has_math": false,
+  "modified": "2025-11-03T20:07:50.194207",
+  "created": "2025-11-03T20:07:50.199875",
+  "summary": "# Djed Phase 2 Roadmap  **Built on the success of @djed/logger v0.1.0**  ---  ## 🎯 Vision  Expand Djed from a single package to a comprehensive infrastructure ecosystem that accelerates LUXOR project",
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "pdf_files": {
+    "light": "light/PHASE_2_ROADMAP-light.pdf",
+    "dark": "dark/PHASE_2_ROADMAP-dark.pdf"
+  }
+}

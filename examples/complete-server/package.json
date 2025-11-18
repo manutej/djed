@@ -1,0 +1,26 @@
+{
+  "name": "@djed-examples/complete-server",
+  "version": "1.0.0",
+  "description": "Complete example showing all Djed components working together",
+  "main": "./dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["mcp", "djed", "example"],
+  "author": "LUXOR",
+  "license": "MIT",
+  "dependencies": {
+    "@djed/mcp-base": "^0.1.0",
+    "@djed/logger": "^0.1.0",
+    "@djed/validator": "^0.1.0",
+    "@djed/shared-types": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}
