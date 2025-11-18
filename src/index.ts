@@ -1,9 +1,22 @@
 import winston from 'winston';
+import { pipe } from 'fp-ts/function';
+import * as E from 'fp-ts/Either';
+import {
+  validateLoggerConfig,
+  buildWinstonLoggerOptions,
+  executeLogOperation,
+  logInfo,
+  logError,
+  logWarn,
+  logDebug,
+  LoggerOptionsInput,
+} from './core';
 
 /**
  * Logger options supporting progressive complexity (L1 → L2 → L3)
+ * Backward compatible with existing code
  */
-export interface LoggerOptions {
+export interface LoggerOptions extends LoggerOptionsInput {
   /**
    * L2: Logging level
    * @default 'info'
@@ -32,6 +45,7 @@ export interface LoggerOptions {
 
 /**
  * Structured logger wrapper around Winston
+ * Now using functional programming patterns with zero side effects during configuration
  *
  * Progressive API Design:
  * - L1 (Novice): new Logger('app-name') - zero config, works immediately
@@ -61,80 +75,63 @@ export class Logger {
   private winston: winston.Logger;
 
   constructor(private name: string, options: LoggerOptions = {}) {
-    // L3: Full Winston control if provided
-    if (options.winston) {
-      this.winston = winston.createLogger(options.winston);
-      return;
-    }
+    // Use functional configuration pipeline with fp-ts Either
+    // This ensures all configuration is validated and pure
+    const config = pipe(
+      validateLoggerConfig(name, options),
+      E.map((cfg) => buildWinstonLoggerOptions(cfg)),
+      E.fold(
+        (error) => {
+          // In case of validation error, create a minimal logger
+          console.error(`Logger validation error: ${error}`);
+          return { silent: true } as winston.LoggerOptions;
+        },
+        (opts) => opts
+      )
+    );
 
-    // L2: Silent mode (for testing/benchmarking)
-    if (options.silent) {
-      this.winston = winston.createLogger({ silent: true });
-      return;
-    }
-
-    // L1/L2: Sensible defaults
-    const format = options.format === 'json'
-      ? winston.format.json()
-      : winston.format.combine(
-          winston.format.colorize(),
-          winston.format.simple()
-        );
-
-    this.winston = winston.createLogger({
-      level: options.level || 'info',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.label({ label: name }),
-        format
-      ),
-      transports: [new winston.transports.Console()]
-    });
+    // Side effect only happens here - logger instantiation
+    this.winston = winston.createLogger(config);
   }
 
   /**
    * Log an info message
+   * Uses functional Reader pattern for pure logging operation
    * @param message - Message to log
    * @param meta - Optional metadata object
    */
   info(message: string, meta?: any): void {
-    this.winston.info(message, meta);
+    executeLogOperation(logInfo(message, meta), this.winston);
   }
 
   /**
    * Log an error message
+   * Uses functional Reader pattern with proper Error serialization
    * @param message - Error message
    * @param meta - Optional metadata (e.g., error object, context)
    */
   error(message: string, meta?: any): void {
-    // Serialize Error objects properly for JSON logging
-    if (meta instanceof Error) {
-      meta = {
-        ...meta,  // Include any custom properties first
-        message: meta.message,
-        stack: meta.stack,
-        name: meta.name
-      };
-    }
-    this.winston.error(message, meta);
+    executeLogOperation(logError(message, meta), this.winston);
   }
 
   /**
    * Log a warning message
+   * Uses functional Reader pattern for pure logging operation
    * @param message - Warning message
    * @param meta - Optional metadata
    */
   warn(message: string, meta?: any): void {
-    this.winston.warn(message, meta);
+    executeLogOperation(logWarn(message, meta), this.winston);
   }
 
   /**
    * Log a debug message
+   * Uses functional Reader pattern for pure logging operation
    * @param message - Debug message
    * @param meta - Optional metadata
    */
   debug(message: string, meta?: any): void {
-    this.winston.debug(message, meta);
+    executeLogOperation(logDebug(message, meta), this.winston);
   }
 
   /**
@@ -149,6 +146,7 @@ export class Logger {
 /**
  * Measure time to first log (for DX metrics)
  * Built-in measurement for success criteria validation
+ * Pure function with no persistent side effects
  * @returns Time in milliseconds
  */
 export function measureTimeToFirstLog(): number {
@@ -160,7 +158,9 @@ export function measureTimeToFirstLog(): number {
 
 /**
  * Create a logger with sensible defaults (convenience function)
+ * Pure factory function with deferred side effects
  * @param name - Logger name
+ * @param options - Optional logger configuration
  * @returns Logger instance
  */
 export function createLogger(name: string, options?: LoggerOptions): Logger {
@@ -169,3 +169,25 @@ export function createLogger(name: string, options?: LoggerOptions): Logger {
 
 // Re-export Winston for L3 users (convenience)
 export { winston };
+
+// Export functional core for advanced users who want to compose their own loggers
+export {
+  validateLoggerConfig,
+  buildWinstonLoggerOptions,
+  createWinstonFormat,
+  createWinstonTransports,
+  createWinstonLogger,
+  logInfo,
+  logError,
+  logWarn,
+  logDebug,
+  executeLogOperation,
+  composeLogOperations,
+  liftPure,
+  mapLogOperation,
+  type ValidationError,
+  type LoggerConfig,
+  type LoggerOptionsInput,
+  type LogOperation,
+  type LoggerEnv,
+} from './core';
