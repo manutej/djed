@@ -1,0 +1,51 @@
+{
+  "name": "@djed/telemetry",
+  "version": "0.1.0",
+  "description": "Functional observability and telemetry library with Prometheus and OpenTelemetry support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run clean && npm run build && npm test"
+  },
+  "keywords": [
+    "telemetry",
+    "observability",
+    "metrics",
+    "tracing",
+    "prometheus",
+    "opentelemetry",
+    "monitoring",
+    "functional-programming",
+    "fp-ts",
+    "djed"
+  ],
+  "author": "LUXOR",
+  "license": "MIT",
+  "peerDependencies": {
+    "fp-ts": "^2.16.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-trace-base": {
+      "optional": true
+    },
+    "@opentelemetry/sdk-metrics": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@vitest/coverage-v8": "^1.6.1",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1",
+    "fp-ts": "^2.16.11"
+  },
+  "dependencies": {}
+}

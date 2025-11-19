@@ -1,0 +1,61 @@
+{
+  "name": "mcp-server-minimal",
+  "version": "1.0.0",
+  "description": "Minimal MCP server template using @djed packages with functional programming patterns",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "docker:build": "docker build -t mcp-server-minimal .",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "keywords": [
+    "mcp",
+    "server",
+    "typescript",
+    "functional-programming",
+    "fp-ts",
+    "djed",
+    "luxor"
+  ],
+  "author": "LUXOR",
+  "license": "MIT",
+  "dependencies": {
+    "@djed/config": "^0.1.0",
+    "@djed/logger": "^0.1.0",
+    "@djed/http": "^0.1.0",
+    "@djed/database": "^0.1.0",
+    "@djed/validation": "^0.1.0",
+    "express": "^4.18.2",
+    "fp-ts": "^2.16.11",
+    "winston": "^3.11.0",
+    "pg": "^8.13.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.19.24",
+    "@types/pg": "^8.11.10",
+    "@vitest/coverage-v8": "^1.6.1",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1",
+    "supertest": "^6.3.4",
+    "@types/supertest": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

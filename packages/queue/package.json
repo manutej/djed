@@ -1,0 +1,57 @@
+{
+  "name": "@djed/queue",
+  "version": "0.1.0",
+  "description": "Functional message queue with TaskEither for async operations and multiple backends",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run clean && npm run build && npm test"
+  },
+  "keywords": [
+    "queue",
+    "message-queue",
+    "job-queue",
+    "fp-ts",
+    "functional-programming",
+    "task-either",
+    "bull",
+    "redis",
+    "rabbitmq",
+    "sqs",
+    "luxor",
+    "djed"
+  ],
+  "author": "LUXOR",
+  "license": "MIT",
+  "peerDependencies": {
+    "fp-ts": "^2.16.11"
+  },
+  "peerDependenciesMeta": {
+    "bull": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    },
+    "amqplib": {
+      "optional": true
+    },
+    "@aws-sdk/client-sqs": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@vitest/coverage-v8": "^1.6.1",
+    "fp-ts": "^2.16.11",
+    "bull": "^4.11.5",
+    "ioredis": "^5.3.2",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1"
+  }
+}
