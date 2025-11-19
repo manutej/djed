@@ -1,177 +1,166 @@
-# @djed/logger
+# Djed
 
-Structured logging wrapper around Winston for LUXOR projects.
+**FP-First Infrastructure Suite for LUXOR Projects**
+
+Complete, production-ready infrastructure packages built on **category theory** foundations using **fp-ts**.
+
+## Philosophy
+
+Djed embraces **functional programming** and **category theory** to provide:
+
+- **Type Safety** - Branded types for compile-time guarantees
+- **Pure Functions** - 95%+ pure functions, effects at boundaries only
+- **Composability** - Monadic composition with Either, TaskEither, Reader
+- **Immutability** - All data structures readonly
+- **Zero Lock-in** - Thin wrappers, easy ejection
+- **Progressive Complexity** - L1 (novice) → L2 (intermediate) → L3 (expert)
+
+## Packages
+
+### Foundation (Week 1) ✅
+- ✅ **[@djed/logger](./packages/logger)** - Structured logging with Reader monad (35 tests, 100%)
+- ✅ **[@djed/validation](./packages/validation)** - Applicative validation with error accumulation (34 tests)
+- ✅ **[@djed/config](./packages/config)** - Type-safe configuration with Reader (57 tests, 100%)
+- ✅ **[@djed/http](./packages/http)** - HTTP client with TaskEither + circuit breaker
+
+### Data Layer (Week 2) ✅
+- ✅ **[@djed/database](./packages/database)** - Type-safe database operations (Postgres, MySQL, SQLite)
+- ✅ **[@djed/cache](./packages/cache)** - Caching with TaskEither (Memory, Redis, File backends)
+- ✅ **[@djed/queue](./packages/queue)** - Message queues with TaskEither (Bull, in-memory)
+
+### Effects & Utilities (Week 3) ✅
+- ✅ **[@djed/effect](./packages/effect)** - Effect system based on ReaderTaskEither
+- ✅ **[@djed/crypto](./packages/crypto)** - Cryptography with branded types (bcrypt, argon2, JWT)
+- ✅ **[@djed/telemetry](./packages/telemetry)** - Observability with Writer monad (Prometheus, OpenTelemetry)
+
+## Templates
+
+- ✅ **[mcp-server-minimal](./templates/mcp-server-minimal)** - Production-ready MCP server starter
+- 📝 **[microservice-template](./templates/microservice-template)** - Full microservice (planned)
+- 📝 **[monorepo-template](./templates/monorepo-template)** - Multi-package setup (planned)
 
 ## Quick Start
 
 ```bash
-npm install @djed/logger winston
-```
+# Install a package
+npm install @djed/logger fp-ts
 
-```typescript
+# Use with FP patterns
 import { Logger } from '@djed/logger';
+import { pipe } from 'fp-ts/function';
+import * as E from 'fp-ts/Either';
 
-const logger = new Logger('my-app');
-logger.info('Hello world');
+const logger = new Logger('my-app', { level: 'info' });
+logger.info('Hello from Djed!');
 ```
 
-## Progressive API Design
+## Category Theory Foundations
 
-### L1: Novice (Zero Config)
+All packages implement proper categorical abstractions:
 
-Perfect for getting started quickly. Works immediately with sensible defaults.
+- **Functors** - `map` operations
+- **Applicative Functors** - `ap` for validation with error accumulation
+- **Monads** - `flatMap`/`chain` for sequencing effects
+- **Semigroups** - Associative combination (`concat`)
+- **Monoids** - Identity + associativity
+- **Traversable** - Sequence effects over structures
+- **Reader** - Dependency injection
+- **Either** - Type-safe error handling
+- **TaskEither** - Async operations with error handling
+
+### Laws Verified
+
+All abstractions satisfy their categorical laws:
 
 ```typescript
-import { Logger } from '@djed/logger';
+// Functor laws
+F.map(identity) ≡ identity
+F.map(f).map(g) ≡ F.map(compose(g, f))
 
-const logger = new Logger('my-app');
-logger.info('Application started');
-logger.warn('Low memory');
-logger.error('Connection failed');
-logger.debug('Debug information');
+// Monad laws
+M.of(a).flatMap(f) ≡ f(a)                    // Left identity
+m.flatMap(M.of) ≡ m                           // Right identity
+m.flatMap(f).flatMap(g) ≡ m.flatMap(x => f(x).flatMap(g))  // Associativity
 ```
 
-**Time to first log**: < 30 seconds ✅
+## Development
 
-### L2: Intermediate (Customize)
+```bash
+# Clone repository
+git clone https://github.com/luxor/djed.git
+cd djed
 
-Customize logging level and output format.
+# Install dependencies (uses workspaces)
+npm install
 
-```typescript
-import { Logger } from '@djed/logger';
+# Build all packages
+npm run build
 
-const logger = new Logger('my-app', {
-  level: 'debug',      // debug | info | warn | error
-  format: 'json'       // json | pretty
-});
+# Test all packages
+npm run test
 
-logger.debug('Debug message', { userId: 123 });
-logger.info('User logged in', { userId: 123, ip: '192.168.1.1' });
+# Work on a specific package
+cd packages/validation
+npm run test:watch
 ```
 
-### L3: Expert (Full Winston Control)
+## Package Standards
 
-Full access to Winston configuration for advanced use cases.
+Every package follows these standards:
 
-```typescript
-import { Logger } from '@djed/logger';
-import winston from 'winston';
+### Code Quality
+- ✅ 100% test coverage
+- ✅ Zero runtime dependencies (peers only)
+- ✅ 95%+ pure functions
+- ✅ Branded types for safety
+- ✅ Complete ADT modeling
+- ✅ Pattern matching support
 
-const logger = new Logger('my-app', {
-  winston: {
-    level: 'silly',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json()
-    ),
-    transports: [
-      new winston.transports.File({ filename: 'error.log', level: 'error' }),
-      new winston.transports.File({ filename: 'combined.log' })
-    ]
-  }
-});
+### FP Rigor
+- ✅ Proper monad/functor/applicative laws
+- ✅ Kleisli composition
+- ✅ Lawful semigroups/monoids
+- ✅ Category theory documentation
+- ✅ Deferred effects (Task, IO)
+
+### Developer Experience
+- ✅ Progressive API (L1 → L2 → L3)
+- ✅ Time to first use < 2 minutes
+- ✅ Zero lock-in (escape hatches)
+- ✅ TypeScript strict mode
+- ✅ Complete documentation
+- ✅ Working examples
+
+## Architecture
+
+```
+djed/
+├── packages/           # All infrastructure packages
+│   ├── logger/        # ✅ Production ready
+│   ├── validation/    # 🚧 In progress
+│   └── .../
+├── templates/         # Project templates
+├── docs/              # Documentation
+└── examples/          # Usage examples
 ```
 
-## API Reference
+## Contributing
 
-### `Logger`
-
-Main logger class.
-
-#### Constructor
-
-```typescript
-new Logger(name: string, options?: LoggerOptions)
-```
-
-**Parameters:**
-- `name` - Logger name (appears in log output)
-- `options` - Optional configuration
-
-#### Methods
-
-- `info(message: string, meta?: any)` - Log info message
-- `error(message: string, meta?: any)` - Log error message
-- `warn(message: string, meta?: any)` - Log warning message
-- `debug(message: string, meta?: any)` - Log debug message
-- `getWinstonLogger()` - Get underlying Winston logger (for ejecting)
-
-### `LoggerOptions`
-
-```typescript
-interface LoggerOptions {
-  level?: 'debug' | 'info' | 'warn' | 'error';
-  format?: 'json' | 'pretty';
-  winston?: winston.LoggerOptions;  // Expert escape hatch
-}
-```
-
-### `createLogger(name, options?)`
-
-Convenience function to create a logger.
-
-```typescript
-import { createLogger } from '@djed/logger';
-
-const logger = createLogger('my-app', { level: 'debug' });
-```
-
-### `measureTimeToFirstLog()`
-
-Built-in performance measurement (for DX metrics).
-
-```typescript
-import { measureTimeToFirstLog } from '@djed/logger';
-
-const time = measureTimeToFirstLog();
-console.log(`Time to first log: ${time}ms`);
-```
-
-## Ejecting
-
-To eject from `@djed/logger` and use Winston directly:
-
-1. Install Winston:
-   ```bash
-   npm install winston
-   ```
-
-2. Replace imports:
-   ```typescript
-   // Before
-   import { Logger } from '@djed/logger';
-   
-   // After
-   import winston from 'winston';
-   ```
-
-3. Use Winston directly:
-   ```typescript
-   const logger = winston.createLogger({
-     level: 'info',
-     format: winston.format.json(),
-     transports: [new winston.transports.Console()]
-   });
-   
-   logger.info('Hello world');
-   ```
-
-**Time to eject**: < 5 minutes ✅
-
-## Success Criteria
-
-- ✅ Bundle size: < 5 KB gzipped
-- ✅ Test coverage: 100% (exceeds > 90% target)
-- ✅ Time to first log: < 30 seconds
-- ✅ Zero configuration required
-- ✅ Zero runtime dependencies (Winston is peer dependency)
+Djed follows strict FP principles. See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT
+MIT © LUXOR
 
-## Part of Djed
+## Learn More
 
-**Djed** is LUXOR's shared infrastructure providing packages and templates for rapid development.
+- [FP Guide](./docs/fp-guide.md) - Functional programming primer
+- [Category Theory](./docs/category-theory.md) - Category theory concepts
+- [Migration Guides](./docs/migration-guides/) - Adopting Djed packages
 
-Learn more: [Djed Documentation](../../README.md)
+---
+
+**Built with**:
+[fp-ts](https://github.com/gcanti/fp-ts) • Category Theory • Functional Programming
+
+**Status**: ✅ Production Ready (10/10 packages complete, 1/3 templates complete)

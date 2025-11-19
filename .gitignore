@@ -1,58 +1,42 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
+**/node_modules/
 
-# Build outputs
+# Build output
 dist/
-build/
+**/dist/
 *.tsbuildinfo
 
-# Testing
+# Test coverage
 coverage/
+**/coverage/
 *.lcov
 
-# Environment files (keep .env.test as template)
-# Uncomment if .env.test contains secrets:
-# .env.test
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Logs
-logs/
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
+logs/
 
-# Output directories (PDFs, generated files)
-output/
+# Temp
+*.tmp
+.temp/
 
 # Metrics
 metrics.json
-
-# OS files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-*.swp
-*~
-
-# Temporary files
-tmp/
-temp/
-*.tmp
+**/metrics.json

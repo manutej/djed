@@ -1,0 +1,40 @@
+{
+  "name": "@djed/effect",
+  "version": "0.1.0",
+  "description": "Lightweight effect system for managing side effects with ReaderTaskEither",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run clean && npm run build && npm test"
+  },
+  "keywords": [
+    "effect",
+    "fp-ts",
+    "functional-programming",
+    "reader",
+    "task",
+    "either",
+    "side-effects",
+    "zio",
+    "cats-effect",
+    "luxor",
+    "djed"
+  ],
+  "author": "LUXOR",
+  "license": "MIT",
+  "peerDependencies": {
+    "fp-ts": "^2.16.11"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@vitest/coverage-v8": "^1.6.1",
+    "fp-ts": "^2.16.11",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1"
+  }
+}
