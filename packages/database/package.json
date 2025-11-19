@@ -1,0 +1,52 @@
+{
+  "name": "@djed/database",
+  "version": "0.1.0",
+  "description": "Type-safe database operations with TaskEither for LUXOR projects",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist coverage",
+    "prepublishOnly": "npm run clean && npm run build && npm test"
+  },
+  "keywords": [
+    "database",
+    "fp-ts",
+    "functional-programming",
+    "taskeither",
+    "postgres",
+    "mysql",
+    "sqlite",
+    "query-builder",
+    "luxor",
+    "djed"
+  ],
+  "author": "LUXOR",
+  "license": "MIT",
+  "peerDependencies": {
+    "fp-ts": "^2.16.11"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "@types/pg": "^8.11.10",
+    "@vitest/coverage-v8": "^1.6.1",
+    "fp-ts": "^2.16.11",
+    "pg": "^8.13.1",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1"
+  }
+}

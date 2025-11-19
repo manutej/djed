@@ -5,6 +5,7 @@
 
 import { pipe } from 'fp-ts/function';
 import * as E from 'fp-ts/Either';
+import * as NEA from 'fp-ts/NonEmptyArray';
 import {
   Validator,
   ValidationResult,
@@ -333,10 +334,10 @@ export const intersection = <A, B>(
   }
 
   if (E.isLeft(r1) && E.isLeft(r2)) {
-    return E.left([...r1.left, ...r2.left]);
+    return E.left(NEA.concat(r2.left)(r1.left));
   }
 
-  return E.isLeft(r1) ? r1 : r2;
+  return (E.isLeft(r1) ? r1 : r2) as ValidationResult<A & B>;
 };
 
 /**

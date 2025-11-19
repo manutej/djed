@@ -24,7 +24,7 @@ import {
  * Semigroup for ValidationErrors
  * Combines multiple validation errors
  */
-export const ValidationErrorsSemigroup: NEA.Semigroup<ValidationError> = NEA.getSemigroup<ValidationError>();
+export const ValidationErrorsSemigroup = NEA.getSemigroup<ValidationError>();
 
 /**
  * Create a successful validation
@@ -119,7 +119,7 @@ export const fold = <A, B>(
 export const getOrThrow = <A>(va: ValidationResult<A>): A =>
   pipe(
     va,
-    E.getOrElse((errors: ValidationErrors) => {
+    E.getOrElse((errors: ValidationErrors): A => {
       throw new Error(`Validation failed:\n${errors.map(e => `  - ${e.message}`).join('\n')}`);
     })
   );
@@ -137,14 +137,20 @@ export const getOrElse = <A>(defaultValue: A) => (va: ValidationResult<A>): A =>
 export const sequenceArray = <A>(
   validations: readonly ValidationResult<A>[]
 ): ValidationResult<readonly A[]> => {
-  return validations.reduce<ValidationResult<readonly A[]>>(
-    (acc, curr) =>
-      pipe(
-        acc,
-        ap(pipe(curr, map(a => (as: readonly A[]) => [...as, a])))
-      ),
-    success([] as readonly A[])
-  );
+  const results: A[] = [];
+  const errors: ValidationError[] = [];
+
+  for (const validation of validations) {
+    if (E.isRight(validation)) {
+      results.push(validation.right);
+    } else {
+      errors.push(...validation.left);
+    }
+  }
+
+  return errors.length > 0
+    ? E.left(errors as ValidationErrors)
+    : E.right(results);
 };
 
 /**
@@ -176,12 +182,13 @@ export const struct = <A extends Record<string, any>>(
 
     return pipe(
       validator(fieldValue),
-      mapErrors(errors =>
-        errors.map(e => ({
+      mapErrors(errors => {
+        const mapped: ValidationError[] = errors.map(e => ({
           ...e,
           path: [String(key), ...e.path],
-        })) as ValidationErrors
-      )
+        }));
+        return mapped as unknown as ValidationErrors;
+      })
     );
   });
 
@@ -208,20 +215,20 @@ export const array = <A>(itemValidator: Validator<unknown, A>) => (
     return failure(validationError('Expected an array', [], value));
   }
 
-  return pipe(
-    value,
-    traverseArray((item, index) =>
-      pipe(
-        itemValidator(item),
-        mapErrors(errors =>
-          errors.map(e => ({
-            ...e,
-            path: [String(index), ...e.path],
-          })) as ValidationErrors
-        )
-      )
+  const validations = value.map((item, index) =>
+    pipe(
+      itemValidator(item),
+      mapErrors(errors => {
+        const mapped: ValidationError[] = errors.map(e => ({
+          ...e,
+          path: [String(index), ...e.path],
+        }));
+        return mapped as unknown as ValidationErrors;
+      })
     )
   );
+
+  return sequenceArray(validations);
 };
 
 /**
